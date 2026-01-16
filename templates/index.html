@@ -51,7 +51,7 @@
                                                 <span>{{ task.project_name }}</span>
                                             {% endif %}
                                             {% if task.due_date %}
-                                                <span>Due: {{ task.due_date.strftime('%m/%d') }}</span>
+                                                <span>Due: {{ task.due_date|format_datetime('%m/%d') }}</span>
                                             {% endif %}
                                         </div>
                                     </div>
