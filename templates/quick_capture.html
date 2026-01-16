@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}FOCUS{% endblock %}
+
+{% block content %}
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div style="margin-bottom: var(--space-xl);">
+            <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-sm);">
+                Quick Capture
+            </h1>
+            <p style="color: var(--color-text-soft); font-size: 16px;">
+                Quickly capture tasks, ideas, or save links without losing your flow.
+            </p>
+        </div>
+
+        <div class="section">
+            <div class="capture-tabs">
+                <button class="tab-btn active" data-tab="task">Task</button>
+                <button class="tab-btn" data-tab="idea">Idea</button>
+                <button class="tab-btn" data-tab="link">Link</button>
+                <button class="tab-btn" data-tab="note">Note</button>
+            </div>
+            
+            <div class="tab-content">
+                <div id="task-tab" class="tab-panel active">
+                    <form id="quick-task-form">
+                        <input type="text" id="task-title" placeholder="What needs to be done?" class="input-field" required autofocus>
+                        
+                        <textarea id="task-description" placeholder="Additional details (optional)..." class="textarea-field" rows="2"></textarea>
+                        
+                        <div class="form-row">
+                            <select id="task-priority" class="select-field">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                            
+                            <select id="task-energy" class="select-field">
+                                <option value="low">Low Energy</option>
+                                <option value="medium" selected>Medium Energy</option>
+                                <option value="high">High Energy</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <input type="number" id="task-estimated-time" placeholder="Estimated minutes" class="input-field" min="1" max="480">
+                            <input type="date" id="task-due-date" class="input-field">
+                        </div>
+                        
+                        <select id="task-project" class="select-field">
+                            <option value="">No Project</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <button type="submit" class="btn btn-primary">Add Task</button>
+                    </form>
+                </div>
+                
+                <div id="idea-tab" class="tab-panel">
+                    <form id="quick-idea-form">
+                        <input type="text" id="idea-title" placeholder="What's your idea?" class="input-field" required>
+                        <textarea id="idea-description" placeholder="Describe it in detail..." class="textarea-field" rows="4"></textarea>
+                        
+                        <select id="idea-project" class="select-field">
+                            <option value="">No Project</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <button type="submit" class="btn btn-primary">Save Idea</button>
+                    </form>
+                </div>
+                
+                <div id="link-tab" class="tab-panel">
+                    <form id="quick-link-form">
+                        <input type="url" id="link-url" placeholder="Paste the URL..." class="input-field" required>
+                        <input type="text" id="link-title" placeholder="Title (optional)" class="input-field">
+                        <textarea id="link-description" placeholder="Why are you saving this? Context notes..." class="textarea-field" rows="3"></textarea>
+                        
+                        <select id="link-project" class="select-field">
+                            <option value="">No Project</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <button type="submit" class="btn btn-primary">Save to Backburner</button>
+                    </form>
+                </div>
+
+                <div id="note-tab" class="tab-panel">
+                    <form id="quick-note-form">
+                        <input type="text" id="note-title" placeholder="Note title (optional)" class="input-field">
+                        <textarea id="note-content" placeholder="Start writing your note..." class="textarea-field" rows="8" required></textarea>
+                        
+                        <select id="note-project" class="select-field">
+                            <option value="">No Project</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <button type="submit" class="btn btn-primary">Save Note</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin-top: var(--space-xl);">
+            <div class="section-header">
+                <h3 class="section-title">Quick Tips</h3>
+            </div>
+            <div class="section-content">
+                <div style="display: grid; gap: var(--space-md); font-size: 14px; color: var(--color-text-soft);">
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <span>Use <kbd style="background: var(--color-surface-muted); padding: 2px 4px; border-radius: 3px; font-family: var(--font-mono); font-size: 12px;">Ctrl+K</kbd> anywhere to open quick capture</span>
+                    </div>
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <span>Match task energy levels to your current state for better productivity</span>
+                    </div>
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <span>Save links to your backburner when you find interesting resources but can't read them now</span>
+                    </div>
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <span>Capture ideas immediately - your brain will thank you for the reduced cognitive load</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: var(--space-xl);">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                    
+                    setTimeout(() => {
+                        const firstInput = document.querySelector(`#${tabName}-tab input, #${tabName}-tab textarea`);
+                        if (firstInput) firstInput.focus();
+                    }, 50);
+                });
+            });
+
+            setupFormSubmissions();
+            
+            setupAutoSave();
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tabName) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            const targetPanel = document.getElementById(`${tabName}-tab`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+        }
+
+        function setupFormSubmissions() {
+            document.getElementById('quick-task-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitQuickTask();
+            });
+            
+            document.getElementById('quick-idea-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitQuickIdea();
+            });
+            
+            document.getElementById('quick-link-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitQuickLink();
+            });
+
+            document.getElementById('quick-note-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitQuickNote();
+            });
+        }
+
+        function submitQuickTask() {
+            const taskData = {
+                title: document.getElementById('task-title').value.trim(),
+                description: document.getElementById('task-description').value.trim(),
+                priority: document.getElementById('task-priority').value,
+                energy_level: document.getElementById('task-energy').value,
+                estimated_time: document.getElementById('task-estimated-time').value || null,
+                due_date: document.getElementById('task-due-date').value || null,
+                project_id: document.getElementById('task-project').value || null
+            };
+            
+            if (!taskData.title) {
+                showToast('Please enter a task title', 'error');
+                return;
+            }
+            
+            submitCapture('/api/tasks/quick-add', taskData, 'Task added successfully!');
+        }
+
+        function submitQuickIdea() {
+            const ideaData = {
+                title: document.getElementById('idea-title').value.trim(),
+                description: document.getElementById('idea-description').value.trim(),
+                project_id: document.getElementById('idea-project').value || null
+            };
+            
+            if (!ideaData.title) {
+                showToast('Please enter an idea title', 'error');
+                return;
+            }
+            
+            submitCapture('/api/ideas/quick-add', ideaData, 'Idea captured!');
+        }
+
+        function submitQuickLink() {
+            const linkData = {
+                url: document.getElementById('link-url').value.trim(),
+                title: document.getElementById('link-title').value.trim(),
+                description: document.getElementById('link-description').value.trim(),
+                project_id: document.getElementById('link-project').value || null
+            };
+            
+            if (!linkData.url) {
+                showToast('Please enter a URL', 'error');
+                return;
+            }
+            
+            submitCapture('/api/links/quick-add', linkData, 'Link saved to backburner!');
+        }
+
+        function submitQuickNote() {
+            const noteData = {
+                title: document.getElementById('note-title').value.trim(),
+                content: document.getElementById('note-content').value.trim(),
+                project_id: document.getElementById('note-project').value || null
+            };
+            
+            if (!noteData.content) {
+                showToast('Please enter note content', 'error');
+                return;
+            }
+            
+            submitCapture('/api/notes/quick-add', noteData, 'Note saved!');
+        }
+
+        function submitCapture(endpoint, data, successMessage) {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(successMessage, 'success');
+                    
+                    const activeTab = document.querySelector('.tab-panel.active form');
+                    if (activeTab) activeTab.reset();
+                    
+                    const formId = activeTab.id;
+                    localStorage.removeItem(`focus-form-${formId}`);
+                    
+                } else {
+                    showToast(data.error || 'Error saving', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error saving', 'error');
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '1000';
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        function setupAutoSave() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    input.addEventListener('input', debounce(() => {
+                        const formData = new FormData(form);
+                        const data = Object.fromEntries(formData.entries());
+                        localStorage.setItem(`focus-form-${form.id}`, JSON.stringify(data));
+                    }, 500));
+                });
+            });
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+{% endblock %}

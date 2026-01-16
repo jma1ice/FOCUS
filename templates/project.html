@@ -1,0 +1,717 @@
+{% extends "base.html" %}
+
+{% block title %}FOCUS{% endblock %}
+
+{% block content %}
+    <div style="margin-bottom: var(--space-lg);">
+        <div style="display: flex; align-items: center; gap: var(--space-lg); margin-bottom: var(--space-lg);">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
+                    <div style="width: 8px; height: 40px; border-radius: 4px; background: {{ project.color }};"></div>
+                    <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--color-text);">
+                        {{ project.name }}
+                    </h1>
+                </div>
+                {% if project.description %}
+                    <p style="color: var(--color-text-soft); font-size: 16px; margin-left: 24px;">
+                        {{ project.description }}
+                    </p>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: var(--space-sm);">
+                <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+                <button class="btn btn-secondary" onclick="editProject()">Edit</button>
+                <button class="btn btn-danger" onclick="deleteProject({{ project.id }}, '{{ project.name }}')">Delete Project</button>
+                <button class="btn btn-primary" onclick="openQuickCapture('task')">Add Task</button>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-lg);">
+            <div style="background: var(--color-surface); border-radius: var(--border-radius-lg); padding: var(--space-lg); border: 1px solid var(--color-border); text-align: center;">
+                <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: {{ project.color }};">
+                    {{ tasks|length }}
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">
+                    Active Tasks
+                </div>
+            </div>
+            
+            <div style="background: var(--color-surface); border-radius: var(--border-radius-lg); padding: var(--space-lg); border: 1px solid var(--color-border); text-align: center;">
+                <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--color-low);">
+                    {{ completed_tasks|length }}
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">
+                    Completed
+                </div>
+            </div>
+            
+            <div style="background: var(--color-surface); border-radius: var(--border-radius-lg); padding: var(--space-lg); border: 1px solid var(--color-border); text-align: center;">
+                <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--color-medium);">
+                    {{ ideas|length }}
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">
+                    Ideas
+                </div>
+            </div>
+            
+            <div style="background: var(--color-surface); border-radius: var(--border-radius-lg); padding: var(--space-lg); border: 1px solid var(--color-border); text-align: center;">
+                <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--color-primary);">
+                    {{ notes|length }}
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">
+                    Notes
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: var(--space-lg);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Quick Actions</h3>
+                </div>
+                <div class="section-content">
+                    <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                        <button class="btn btn-primary" onclick="openQuickCapture('task')" style="justify-content: flex-start;">
+                            <span style="margin-right: var(--space-sm);">+</span> Add Task
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('idea')" style="justify-content: flex-start;">
+                            Capture Idea
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('link')" style="justify-content: flex-start;">
+                            Save Link
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('note');" style="justify-content: flex-start;">
+                            Write Note
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Tasks</h2>
+                    <button class="btn btn-tertiary" onclick="openQuickCapture('task')">Add Task</button>
+                </div>
+                <div class="section-content no-padding">
+                    {% if tasks %}
+                        <div class="task-list">
+                            {% for task in tasks %}
+                                <div class="task-item" data-task-id="{{ task.id }}">
+                                    <div class="task-checkbox" onclick="toggleTask({{ task.id }})">
+                                        {% if task.is_completed %}✓{% endif %}
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">{{ task.title }}</div>
+                                        {% if task.description %}
+                                            <div style="font-size: 14px; color: var(--color-text-soft); margin: var(--space-xs) 0;">
+                                                {{ task.description }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="task-meta">
+                                            <span class="task-priority {{ task.priority }}">{{ task.priority }}</span>
+                                            <span class="task-energy {{ task.energy_level }}">{{ task.energy_level }} energy</span>
+                                            {% if task.due_date %}
+                                                <span>Due: {{ task.due_date|format_datetime('%m/%d/%Y') }}</span>
+                                            {% endif %}
+                                            {% if task.estimated_time %}
+                                                <span>~{{ task.estimated_time }}min</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="item-delete-btn" onclick="deleteItem('task', {{ task.id }}, '{{ task.title|replace("'", "\\'") }}')" title="Delete Task">
+                                            Delete
+                                        </button>
+                                        <button class="item-edit-btn" onclick="editTask({{ task.id }}, `{{ task.title|replace('`', '\\`')|replace('\\', '\\\\') }}`, `{{ (task.description or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`, '{{ task.priority }}', '{{ task.energy_level }}', '{{ task.estimated_time or '' }}', '{{ task.due_date or '' }}')" title="Edit Task">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-text">No tasks yet</div>
+                            <p style="color: var(--color-text-muted); font-size: 14px;">Add your first task to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if completed_tasks %}
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title">Recently Completed</h3>
+                    </div>
+                    <div class="section-content no-padding">
+                        <div class="task-list">
+                            {% for task in completed_tasks[:5] %}
+                                <div class="task-item" style="opacity: 0.7;" data-task-id="{{ task.id }}">
+                                    <div class="task-checkbox checked" onclick="toggleTask({{ task.id }})">✓</div>
+                                    <div class="task-content">
+                                        <div class="task-title" style="text-decoration: line-through;">{{ task.title }}</div>
+                                        <div class="task-meta">
+                                            <span class="task-priority {{ task.priority }}">{{ task.priority }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Notes</h2>
+                    <button class="btn btn-tertiary" onclick="openQuickCapture('note')">New Note</button>
+                </div>
+                <div class="section-content">
+                    {% if notes %}
+                        <div style="display: grid; gap: var(--space-sm);">
+                            {% for note in notes %}
+                                <div class="pos-rel" style="background: var(--color-surface-soft); border-radius: var(--border-radius); padding: var(--space-md); border: 1px solid var(--color-border-soft);">
+                                    {% if note.title %}
+                                        <h4 style="font-weight: 600; margin-bottom: var(--space-sm); color: var(--color-text);">
+                                            {{ note.title }}
+                                        </h4>
+                                    {% endif %}
+                                    <div style="color: var(--color-text-soft); font-size: 14px; line-height: 1.6; margin-bottom: var(--space-sm);">
+                                        {{ note.content[:200] }}{% if note.content|length > 200 %}...{% endif %}
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="item-delete-btn" onclick="deleteItem('note', {{ note.id }}, '{{ (note.title or 'Untitled Note')|replace("'", "\\'") }}')" title="Delete Note">
+                                            Delete
+                                        </button>
+                                        <button class="item-edit-btn" onclick="editNote({{ note.id }}, `{{ (note.title or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`, `{{ note.content|replace('`', '\\`')|replace('\\', '\\\\') }}`)" title="Edit Note">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-text">No notes yet</div>
+                            <p style="color: var(--color-text-muted); font-size: 14px;">Start capturing your thoughts.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Ideas</h3>
+                    <button class="btn btn-tertiary" onclick="openQuickCapture('idea')">Add Idea</button>
+                </div>
+                <div class="section-content">
+                    {% if ideas %}
+                        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                            {% for idea in ideas %}
+                                <div class="pos-rel" style="padding: var(--space-md); background: var(--color-surface-soft); border-radius: var(--border-radius); border: 1px solid var(--color-border-soft);">
+                                    <div style="font-weight: 500; color: var(--color-text); margin-bottom: var(--space-xs); font-size: 14px;">
+                                        {{ idea.title }}
+                                    </div>
+                                    {% if idea.description %}
+                                        <div style="font-size: 13px; color: var(--color-text-soft); line-height: 1.4; margin-bottom: var(--space-xs);">
+                                            {{ idea.description[:100] }}{% if idea.description|length > 100 %}...{% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="item-actions">
+                                        <button class="item-delete-btn" onclick="deleteItem('idea', {{ idea.id }}, '{{ idea.title|replace("'", "\\'") }}')" title="Delete Idea">
+                                            Delete
+                                        </button>
+                                        <button class="item-edit-btn" onclick="editIdea({{ idea.id }}, `{{ idea.title|replace('`', '\\`')|replace('\\', '\\\\') }}`, `{{ (idea.description or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`)" title="Edit Idea">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">
+                            <div style="font-size: 14px;">No ideas yet</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Backburner</h3>
+                    <button class="btn btn-tertiary" onclick="openQuickCapture('link')">Save Link</button>
+                </div>
+                <div class="section-content">
+                    {% if links %}
+                        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                            {% for link in links %}
+                                <div class="pos-rel" style="padding: var(--space-sm) var(--space-md); background: var(--color-surface-soft); border-radius: var(--border-radius); border: 1px solid var(--color-border-soft);">
+                                    <a href="{{ link.url }}" target="_blank" style="color: var(--color-primary); text-decoration: none; font-size: 13px; font-weight: 500;">
+                                        {{ link.title or link.url }}
+                                    </a>
+                                    {% if link.description %}
+                                        <div style="font-size: 12px; color: var(--color-text-soft); margin-top: var(--space-xs);">
+                                            {{ link.description[:80] }}{% if link.description|length > 80 %}...{% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <button class="item-delete-btn" onclick="deleteItem('link', {{ link.id }}, '{{ (link.title or link.url)|replace("'", "\\'") }}')" title="Delete Link">
+                                        Delete
+                                    </button>
+                                    <button class="item-edit-btn" onclick="editLink({{ link.id }}, `{{ link.url|replace('`', '\\`')|replace('\\', '\\\\') }}`, `{{ (link.title or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`, `{{ (link.description or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`)" title="Edit Link">
+                                        Edit
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">
+                            <div style="font-size: 14px;">No saved links</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="edit-modal-title">Edit Item</h2>
+                <button class="close-btn" onclick="closeEditModal()">x</button>
+            </div>
+            <div style="padding: var(--space-lg);">
+                <form id="edit-form">
+                    <div id="edit-form-content"></div>
+                    <div style="display: flex; gap: var(--space-md);">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-project-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Project</h2>
+                <button class="close-btn" onclick="closeEditProjectModal()">x</button>
+            </div>
+            <div style="padding: var(--space-lg);">
+                <form id="edit-project-form">
+                    <input type="text" id="edit-project-name" placeholder="Project name..." class="input-field" style="margin-bottom: var(--space-md);" required>
+                    <textarea id="edit-project-description" placeholder="Description (optional)..." class="textarea-field" rows="3"></textarea>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: 12px; color: var(--color-text-soft);">PROJECT COLOR</label>
+                        <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+                            <input type="radio" name="edit-project-color" value="#3b82f6" id="edit-color1" checked style="display: none;">
+                            <label for="edit-color1" style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                            
+                            <input type="radio" name="edit-project-color" value="#dc2626" id="edit-color2" style="display: none;">
+                            <label for="edit-color2" style="width: 32px; height: 32px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                            
+                            <input type="radio" name="edit-project-color" value="#059669" id="edit-color3" style="display: none;">
+                            <label for="edit-color3" style="width: 32px; height: 32px; border-radius: 50%; background: #059669; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                            
+                            <input type="radio" name="edit-project-color" value="#7c2d12" id="edit-color4" style="display: none;">
+                            <label for="edit-color4" style="width: 32px; height: 32px; border-radius: 50%; background: #7c2d12; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                            
+                            <input type="radio" name="edit-project-color" value="#581c87" id="edit-color5" style="display: none;">
+                            <label for="edit-color5" style="width: 32px; height: 32px; border-radius: 50%; background: #581c87; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                            
+                            <input type="radio" name="edit-project-color" value="#0f766e" id="edit-color6" style="display: none;">
+                            <label for="edit-color6" style="width: 32px; height: 32px; border-radius: 50%; background: #0f766e; cursor: pointer; border: 3px solid transparent;" onclick="selectEditColor(this)"></label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md);">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditProjectModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const projectId = {{ project.id }};
+
+            function populateProjectSelects() {
+                return fetch('/api/projects')
+                    .then(response => response.json())
+                    .then(projects => {
+                        const selects = ['task-project', 'idea-project', 'link-project', 'note-project'];
+                        selects.forEach(selectId => {
+                            const select = document.getElementById(selectId);
+                            if (select) {
+                                select.innerHTML = '<option value="">No Project</option>';
+                                
+                                projects.forEach(project => {
+                                    const option = document.createElement('option');
+                                    option.value = project.id;
+                                    option.textContent = project.name;
+                                    select.appendChild(option);
+                                });
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading projects:', error);
+                    });
+            }
+            
+            const originalOpenQuickCapture = window.openQuickCapture;
+            window.openQuickCapture = function(tab = 'task') {
+                originalOpenQuickCapture(tab);
+                
+                setTimeout(() => {
+                    populateProjectSelects().then(() => {
+                        const selects = ['task-project', 'idea-project', 'link-project', 'note-project'];
+                        selects.forEach(selectId => {
+                            const select = document.getElementById(selectId);
+                            if (select) {
+                                select.value = projectId;
+                            }
+                        });
+                    });
+                }, 100);
+            };
+        });
+
+        let currentEditType = null;
+        let currentEditId = null;
+
+        function editTask(id, title, description, priority, energy, estimatedTime, dueDate) {
+            currentEditType = 'task';
+            currentEditId = id;
+            
+            document.getElementById('edit-modal-title').textContent = 'Edit Task';
+            document.getElementById('edit-form-content').innerHTML = `
+                <input type="text" id="edit-title" placeholder="Task title" class="input-field" value="${escapeHtml(title)}" style="margin-bottom: var(--space-md);" required>
+                <textarea id="edit-description" placeholder="Description (optional)" class="textarea-field" rows="3" style="margin-bottom: var(--space-sm);">${escapeHtml(description)}</textarea>
+                
+                <div class="form-row" style="margin-bottom: var(--space-md);">
+                    <select id="edit-priority" class="select-field">
+                        <option value="low" ${priority === 'low' ? 'selected' : ''}>Low Priority</option>
+                        <option value="medium" ${priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+                        <option value="high" ${priority === 'high' ? 'selected' : ''}>High Priority</option>
+                        <option value="urgent" ${priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+                    </select>
+                    
+                    <select id="edit-energy" class="select-field">
+                        <option value="low" ${energy === 'low' ? 'selected' : ''}>Low Energy</option>
+                        <option value="medium" ${energy === 'medium' ? 'selected' : ''}>Medium Energy</option>
+                        <option value="high" ${energy === 'high' ? 'selected' : ''}>High Energy</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <input type="number" id="edit-estimated-time" placeholder="Estimated minutes" class="input-field" value="${estimatedTime}" min="1">
+                    <input type="date" id="edit-due-date" class="input-field" value="${dueDate}">
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-title').focus();
+        }
+
+        function editIdea(id, title, description) {
+            currentEditType = 'idea';
+            currentEditId = id;
+            
+            document.getElementById('edit-modal-title').textContent = 'Edit Idea';
+            document.getElementById('edit-form-content').innerHTML = `
+                <input type="text" id="edit-title" placeholder="Idea title" class="input-field" value="${escapeHtml(title)}" style="margin-bottom: var(--space-md);" required>
+                <textarea id="edit-description" placeholder="Describe your idea..." class="textarea-field" rows="4">${escapeHtml(description)}</textarea>
+            `;
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-title').focus();
+        }
+
+        function editNote(id, title, content) {
+            currentEditType = 'note';
+            currentEditId = id;
+            
+            document.getElementById('edit-modal-title').textContent = 'Edit Note';
+            document.getElementById('edit-form-content').innerHTML = `
+                <input type="text" id="edit-title" placeholder="Note title (optional)" class="input-field" style="margin-bottom: var(--space-md);" value="${escapeHtml(title)}">
+                <textarea id="edit-content" placeholder="Note content" class="textarea-field" rows="8" required>${escapeHtml(content)}</textarea>
+            `;
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-title').focus();
+        }
+
+        function editLink(id, url, title, description) {
+            currentEditType = 'link';
+            currentEditId = id;
+            
+            document.getElementById('edit-modal-title').textContent = 'Edit Link';
+            document.getElementById('edit-form-content').innerHTML = `
+                <input type="url" id="edit-url" placeholder="URL" class="input-field" value="${escapeHtml(url)}" style="margin-bottom: var(--space-md);" required>
+                <input type="text" id="edit-title" placeholder="Title (optional)" class="input-field" style="margin-bottom: var(--space-md);" value="${escapeHtml(title)}">
+                <textarea id="edit-description" placeholder="Description..." class="textarea-field" rows="3">${escapeHtml(description)}</textarea>
+            `;
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-url').focus();
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            currentEditType = null;
+            currentEditId = null;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let data = {};
+            let endpoint = '';
+            
+            switch(currentEditType) {
+                case 'task':
+                    data = {
+                        title: document.getElementById('edit-title').value.trim(),
+                        description: document.getElementById('edit-description').value.trim(),
+                        priority: document.getElementById('edit-priority').value,
+                        energy_level: document.getElementById('edit-energy').value,
+                        estimated_time: document.getElementById('edit-estimated-time').value || null,
+                        due_date: document.getElementById('edit-due-date').value || null
+                    };
+                    endpoint = `/api/tasks/${currentEditId}/update`;
+                    break;
+                    
+                case 'idea':
+                    data = {
+                        title: document.getElementById('edit-title').value.trim(),
+                        description: document.getElementById('edit-description').value.trim()
+                    };
+                    endpoint = `/api/ideas/${currentEditId}/update`;
+                    break;
+                    
+                case 'note':
+                    data = {
+                        title: document.getElementById('edit-title').value.trim(),
+                        content: document.getElementById('edit-content').value.trim()
+                    };
+                    endpoint = `/api/notes/${currentEditId}/update`;
+                    break;
+                    
+                case 'link':
+                    data = {
+                        url: document.getElementById('edit-url').value.trim(),
+                        title: document.getElementById('edit-title').value.trim(),
+                        description: document.getElementById('edit-description').value.trim()
+                    };
+                    endpoint = `/api/links/${currentEditId}/update`;
+                    break;
+            }
+            
+            if (!data.title && currentEditType !== 'note') {
+                showToast('Please enter a title', 'error');
+                return;
+            }
+            
+            if (currentEditType === 'note' && !data.content) {
+                showToast('Please enter note content', 'error');
+                return;
+            }
+            
+            fetch(endpoint, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('Updated successfully!', 'success');
+                    closeEditModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(result.error || 'Error updating item', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error updating item', 'error');
+            });
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '1000';
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function editProject() {
+            const projectId = {{ project.id }};
+            const projectName = `{{ project.name|replace('`', '\\`')|replace('\\', '\\\\') }}`;
+            const projectDescription = `{{ (project.description or '')|replace('`', '\\`')|replace('\\', '\\\\') }}`;
+            const projectColor = '{{ project.color }}';
+            
+            document.getElementById('edit-project-name').value = projectName;
+            document.getElementById('edit-project-description').value = projectDescription;
+            
+            const colorInputs = document.querySelectorAll('input[name="edit-project-color"]');
+            colorInputs.forEach(input => {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (input.value === projectColor) {
+                    input.checked = true;
+                    selectEditColor(label);
+                } else {
+                    label.style.border = '3px solid transparent';
+                }
+            });
+            
+            document.getElementById('edit-project-modal').classList.remove('hidden');
+            document.getElementById('edit-project-name').focus();
+        }
+
+        function closeEditProjectModal() {
+            document.getElementById('edit-project-modal').classList.add('hidden');
+            document.getElementById('edit-project-form').reset();
+        }
+
+        function selectEditColor(label) {
+            document.querySelectorAll('label[for^="edit-color"]').forEach(l => {
+                l.style.border = '3px solid transparent';
+            });
+            
+            label.style.border = '3px solid var(--color-text)';
+            
+            const radioId = label.getAttribute('for');
+            document.getElementById(radioId).checked = true;
+        }
+
+        document.getElementById('edit-project-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const projectId = {{ project.id }};
+            const formData = {
+                name: document.getElementById('edit-project-name').value.trim(),
+                description: document.getElementById('edit-project-description').value.trim(),
+                color: document.querySelector('input[name="edit-project-color"]:checked').value
+            };
+            
+            if (!formData.name) {
+                showToast('Please enter a project name', 'error');
+                return;
+            }
+            
+            fetch(`/api/projects/${projectId}/update`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Project updated successfully!', 'success');
+                    closeEditProjectModal();
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast(data.error || 'Error updating project', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error updating project', 'error');
+            });
+        });
+
+        function deleteItem(type, id, title) {
+            if (!confirm(`Are you sure you want to delete this ${type}?\n\n"${title}"\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            let endpoint = '';
+            switch(type) {
+                case 'task':
+                    endpoint = `/api/tasks/${id}/delete`;
+                    break;
+                case 'idea':
+                    endpoint = `/api/ideas/${id}/delete`;
+                    break;
+                case 'note':
+                    endpoint = `/api/notes/${id}/delete`;
+                    break;
+                case 'link':
+                    endpoint = `/api/links/${id}/delete`;
+                    break;
+                default:
+                    showToast('Invalid item type', 'error');
+                    return;
+            }
+            
+            showToast(`Deleting ${type}...`, 'info');
+            
+            fetch(endpoint, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`, 'success');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast(data.error || `Error deleting ${type}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast(`Error deleting ${type}`, 'error');
+            });
+        }
+    </script>
+{% endblock %}

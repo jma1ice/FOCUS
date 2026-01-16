@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}FOCUS{% endblock %}</title>
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+        
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        <div id="app" class="app-container">
+            <nav class="nav-bar">
+                <div class="nav-content">
+                    <div class="nav-brand">
+                        <a href="{{ url_for('index') }}" class="brand-link">
+                            <span class="brand-icon">◉</span>
+                            <span class="brand-text">FOCUS</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-actions">
+                        <button class="nav-btn" onclick="openQuickCapture()" title="Quick Capture (Ctrl+K)">
+                            <span class="nav-btn-icon">+</span>
+                            <span class="nav-btn-text">Capture</span>
+                        </button>
+                        
+                        <button class="nav-btn" onclick="toggleSmartSuggestions()" title="Smart Suggestions">
+                            <span class="nav-btn-text">Suggest</span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <div id="smart-suggestions" class="smart-suggestions hidden">
+                <div class="suggestions-header">
+                    <h3>Smart Suggestions</h3>
+                    <button class="close-btn" onclick="toggleSmartSuggestions()">x</button>
+                </div>
+                <div id="suggestions-content" class="suggestions-content">
+                    <div class="loading">Finding your next best move...</div>
+                </div>
+            </div>
+
+            <div id="quick-capture-modal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Quick Capture</h2>
+                        <button class="close-btn" onclick="closeQuickCapture()">x</button>
+                    </div>
+                    
+                    <div class="capture-tabs">
+                        <button class="tab-btn active" data-tab="task">Task</button>
+                        <button class="tab-btn" data-tab="idea">Idea</button>
+                        <button class="tab-btn" data-tab="link">Link</button>
+                        <button class="tab-btn" data-tab="note">Note</button>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div id="task-tab" class="tab-panel active">
+                            <form id="quick-task-form">
+                                <input type="text" id="task-title" placeholder="What needs to be done?" class="input-field" required>
+                                <textarea id="task-description" placeholder="Description (optional)" class="textarea-field" rows="3" style="margin-bottom: var(--space-sm);"></textarea>
+
+                                <div class="form-row">
+                                    <select id="task-priority" class="select-field">
+                                        <option value="low">Low Priority</option>
+                                        <option value="medium" selected>Medium Priority</option>
+                                        <option value="high">High Priority</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                    
+                                    <select id="task-energy" class="select-field">
+                                        <option value="low">Low Energy</option>
+                                        <option value="medium" selected>Medium Energy</option>
+                                        <option value="high">High Energy</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-row">
+                                    <input type="number" id="task-estimated-time" placeholder="Estimated minutes" class="input-field" value="${estimatedTime}" min="1">
+                                    <input type="date" id="task-due-date" class="input-field" value="${dueDate}">
+                                </div>
+                                
+                                <select id="task-project" class="select-field">
+                                    <option value="">No Project</option>
+                                </select>
+                                
+                                <button type="submit" class="btn btn-primary">Add Task</button>
+                            </form>
+                        </div>
+                        
+                        <div id="idea-tab" class="tab-panel">
+                            <form id="quick-idea-form">
+                                <input type="text" id="idea-title" placeholder="What's your idea?" class="input-field" required>
+                                <textarea id="idea-description" placeholder="Describe it..." class="textarea-field" rows="3"></textarea>
+                                
+                                <select id="idea-project" class="select-field">
+                                    <option value="">No Project</option>
+                                </select>
+                                
+                                <button type="submit" class="btn btn-primary">Save Idea</button>
+                            </form>
+                        </div>
+                        
+                        <div id="link-tab" class="tab-panel">
+                            <form id="quick-link-form">
+                                <input type="url" id="link-url" placeholder="Paste the URL..." class="input-field" required>
+                                <input type="text" id="link-title" placeholder="Title (optional)" class="input-field">
+                                <textarea id="link-description" placeholder="Why save this?" class="textarea-field" rows="2"></textarea>
+                                
+                                <select id="link-project" class="select-field">
+                                    <option value="">No Project</option>
+                                </select>
+                                
+                                <button type="submit" class="btn btn-primary">Save Link</button>
+                            </form>
+                        </div>
+
+                        <div id="note-tab" class="tab-panel">
+                            <form id="quick-note-form">
+                                <input type="text" id="note-title" placeholder="Note title (optional)" class="input-field">
+                                <textarea id="note-content" placeholder="Start writing your note..." class="textarea-field" rows="6" required></textarea>
+                                
+                                <select id="note-project" class="select-field">
+                                    <option value="">No Project</option>
+                                </select>
+                                
+                                <button type="submit" class="btn btn-primary">Save Note</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+
+            <div id="toast-container" class="toast-container"></div>
+
+            <footer class="footer">
+                <div class="footer-content">
+                    <i>filter out chaos, uncover simplicity</i>
+                </div>
+            </footer>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+        {% block scripts %}{% endblock %}
+    </body>
+    <script>
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</html>

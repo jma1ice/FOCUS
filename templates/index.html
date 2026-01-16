@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}FOCUS{% endblock %}
+
+{% block content %}
+    <div class="dashboard">
+        <div class="dashboard-sidebar">
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Quick Actions</h3>
+                </div>
+                <div class="section-content">
+                    <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                        <button class="btn btn-primary" onclick="openQuickCapture('task')" style="justify-content: flex-start;">
+                            <span style="margin-right: var(--space-sm);">+</span> Add Task
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('idea')" style="justify-content: flex-start;">
+                            Capture Idea
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('link')" style="justify-content: flex-start;">
+                            Save Link
+                        </button>
+                        <button class="btn btn-secondary" onclick="openQuickCapture('note')" style="justify-content: flex-start;">
+                            Write Note
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-main">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Urgent Tasks</h2>
+                    <span class="keyboard-hint">Ctrl+K to add</span>
+                </div>
+                <div class="section-content no-padding">
+                    {% if focus_tasks %}
+                        <div class="task-list">
+                            {% for task in focus_tasks %}
+                                <div class="task-item" data-task-id="{{ task.id }}">
+                                    <div class="task-checkbox" onclick="toggleTask({{ task.id }})">
+                                        {% if task.is_completed %}✓{% endif %}
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">{{ task.title }}</div>
+                                        <div class="task-meta">
+                                            <span class="task-priority {{ task.priority }}">{{ task.priority }}</span>
+                                            <span class="task-energy {{ task.energy_level }}">{{ task.energy_level }} energy</span>
+                                            {% if task.project_name %}
+                                                <span>{{ task.project_name }}</span>
+                                            {% endif %}
+                                            {% if task.due_date %}
+                                                <span>Due: {{ task.due_date.strftime('%m/%d') }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-text">No urgent tasks right now</div>
+                            <p style="color: var(--color-text-muted); font-size: 14px;">You're caught up! Add some tasks to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Projects</h2>
+                    <button class="btn btn-tertiary" onclick="createProject()">New Project</button>
+                </div>
+                <div class="section-content">
+                    {% if projects %}
+                        <div class="projects-grid">
+                            {% for project in projects %}
+                                <div class="project-card" onclick="window.location.href='{{ url_for('project_detail', project_id=project.id) }}'" 
+                                    style="--project-color: {{ project.color }};">
+                                    <button class="project-delete-btn" onclick="event.stopPropagation(); deleteProject({{ project.id }}, '{{ project.name }}')" title="Delete Project">
+                                        x
+                                    </button>
+                                    <h3 class="project-title">{{ project.name }}</h3>
+                                    {% if project.description %}
+                                        <p class="project-description">{{ project.description }}</p>
+                                    {% endif %}
+                                    <div class="project-stats">
+                                        <span>{{ project.task_count }} tasks</span>
+                                        <span>{{ project.idea_count }} ideas</span>
+                                        <span>{{ project.note_count }} notes</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-text">No projects yet</div>
+                            <p style="color: var(--color-text-muted); font-size: 14px;">Create your first project to organize your work.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-sidebar">
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Recent Ideas</h3>
+                </div>
+                <div class="section-content">
+                    {% if recent_ideas %}
+                        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                            {% for idea in recent_ideas %}
+                                <div style="padding: var(--space-md); background: var(--color-surface-soft); border-radius: var(--border-radius); border: 1px solid var(--color-border-soft);">
+                                    <div style="font-weight: 500; color: var(--color-text); margin-bottom: var(--space-xs); font-size: 14px;">
+                                        {{ idea.title }}
+                                    </div>
+                                    {% if idea.description %}
+                                        <div style="font-size: 13px; color: var(--color-text-soft); line-height: 1.4;">
+                                            {{ idea.description[:100] }}{% if idea.description|length > 100 %}...{% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <div style="margin-top: var(--space-xs); font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted);">
+                                        {% if idea.project_name %}project • {{ idea.project_name }}{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">
+                            <div style="font-size: 14px;">No ideas captured yet</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Recent Notes</h3>
+                </div>
+                <div class="section-content">
+                    {% if recent_notes %}
+                        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                            {% for note in recent_notes %}
+                                <div style="padding: var(--space-md); background: var(--color-surface-soft); border-radius: var(--border-radius); border: 1px solid var(--color-border-soft);">
+                                    {% if note.title %}
+                                        <div style="font-weight: 500; color: var(--color-text); margin-bottom: var(--space-xs); font-size: 14px;">
+                                            {{ note.title }}
+                                        </div>
+                                    {% endif %}
+                                    <div style="font-size: 13px; color: var(--color-text-soft); line-height: 1.4;">
+                                        {{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}
+                                    </div>
+                                    <div style="margin-top: var(--space-xs); font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted);">
+                                        {% if note.project_name %}project • {{ note.project_name }}{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">
+                            <div style="font-size: 14px;">No notes yet</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="new-project-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Project</h2>
+                <button class="close-btn" onclick="closeProjectModal()">x</button>
+            </div>
+            <div style="padding: var(--space-lg);">
+                <form id="new-project-form">
+                    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                        <input type="text" id="project-name" placeholder="Project name..." class="input-field" required>
+                        <textarea id="project-description" placeholder="Description (optional)..." class="textarea-field" rows="3"></textarea>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: 12px; color: var(--color-text-soft);">PROJECT COLOR</label>
+                            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+                                <input type="radio" name="project-color" value="#1e40af" id="color1" checked style="display: none;">
+                                <label for="color1" style="width: 32px; height: 32px; border-radius: 50%; background: #1e40af; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                                
+                                <input type="radio" name="project-color" value="#dc2626" id="color2" style="display: none;">
+                                <label for="color2" style="width: 32px; height: 32px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                                
+                                <input type="radio" name="project-color" value="#059669" id="color3" style="display: none;">
+                                <label for="color3" style="width: 32px; height: 32px; border-radius: 50%; background: #059669; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                                
+                                <input type="radio" name="project-color" value="#7c2d12" id="color4" style="display: none;">
+                                <label for="color4" style="width: 32px; height: 32px; border-radius: 50%; background: #7c2d12; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                                
+                                <input type="radio" name="project-color" value="#581c87" id="color5" style="display: none;">
+                                <label for="color5" style="width: 32px; height: 32px; border-radius: 50%; background: #581c87; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                                
+                                <input type="radio" name="project-color" value="#0f766e" id="color6" style="display: none;">
+                                <label for="color6" style="width: 32px; height: 32px; border-radius: 50%; background: #0f766e; cursor: pointer; border: 3px solid transparent;" onclick="selectColor(this)"></label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCompletedCount();
+            loadProjects();
+        });
+
+        function updateCompletedCount() {
+            document.getElementById('completed-count').textContent = '0';
+        }
+
+        function loadProjects() {
+            fetch('/api/projects')
+                .then(response => response.json())
+                .then(projects => {
+                    const selects = ['task-project', 'idea-project', 'link-project', 'note-project'];
+                    selects.forEach(selectId => {
+                        const select = document.getElementById(selectId);
+                        if (select) {
+                            select.innerHTML = '<option value="">No Project</option>';
+                            projects.forEach(project => {
+                                const option = document.createElement('option');
+                                option.value = project.id;
+                                option.textContent = project.name;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading projects:', error));
+        }
+
+        function createProject() {
+            document.getElementById('new-project-modal').classList.remove('hidden');
+            document.getElementById('project-name').focus();
+        }
+
+        function closeProjectModal() {
+            document.getElementById('new-project-modal').classList.add('hidden');
+            document.getElementById('new-project-form').reset();
+        }
+
+        function selectColor(label) {
+            document.querySelectorAll('label[for^="color"]').forEach(l => {
+                l.style.border = '3px solid transparent';
+            });
+            
+            label.style.border = '3px solid var(--color-text)';
+            
+            const radioId = label.getAttribute('for');
+            document.getElementById(radioId).checked = true;
+        }
+
+        document.getElementById('new-project-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('project-name').value,
+                description: document.getElementById('project-description').value,
+                color: document.querySelector('input[name="project-color"]:checked').value
+            };
+            
+            fetch('/api/projects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Project created successfully!', 'success');
+                    closeProjectModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast('Error creating project', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error creating project', 'error');
+            });
+        });
+    </script>
+{% endblock %}
